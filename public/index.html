@@ -3,56 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Thai Receipt OCR</title>
-
+  <title>Receipt OCR</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 
 <body>
-
-<div class="layout">
-
   <aside class="sidebar">
-    <div class="logo">
-      <div class="logo-icon">⚡</div>
-
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
       <div>
-        <h2>Receipt OCR</h2>
+        <h1>Receipt OCR</h1>
         <p>Typhoon + n8n</p>
       </div>
     </div>
 
-    <nav>
-      <a class="active" href="/">Upload</a>
-      <a href="/dashboard.html">Dashboard</a>
+    <nav class="nav">
+      <a href="/" class="nav-link active">Upload</a>
+      <a href="/dashboard.html" class="nav-link">Dashboard</a>
     </nav>
   </aside>
 
-  <main class="main">
-
-    <section class="hero">
-      <p class="badge">THAI RECEIPT AUTOMATION</p>
-
-      <h1>
-        อัพโหลดใบเสร็จ / ใบกำกับภาษี /
-        สลิปโอนเงิน แล้วตรวจข้อมูลก่อนบันทึก
-      </h1>
-
+  <main class="app-main">
+    <section class="hero-card">
+      <p class="eyebrow">THAI RECEIPT AUTOMATION</p>
+      <h2>อัพโหลดใบเสร็จ / ใบกำกับภาษี / สลิปโอนเงิน แล้วตรวจข้อมูลก่อนบันทึก</h2>
       <p>
-        อ่านใบเสร็จ ใบกำกับภาษี และสลิปโอนเงินไทยด้วย
-        Typhoon OCR และส่งข้อมูลเข้า Google Sheets ผ่าน n8n
+        อ่านใบเสร็จ ใบกำกับภาษี และสลิปโอนเงินไทยด้วย Typhoon OCR
+        และส่งข้อมูลเข้า Google Sheets ผ่าน n8n
       </p>
     </section>
 
-    <div class="content-grid">
+    <section class="grid two-cols">
+      <div class="card">
+        <h3>1. Upload document</h3>
 
-      <section class="card">
-
-        <h2>1. Upload document</h2>
-
-        <form id="uploadForm">
-
+        <form id="uploadForm" class="form">
           <input
             id="fileInput"
             name="file"
@@ -61,66 +46,36 @@
             hidden
           />
 
-          <label id="dropZone" class="upload-zone" for="fileInput">
-
-            <div class="upload-icon">
-              📄
-            </div>
-
-            <strong id="fileName">
-              เลือกไฟล์ PNG, JPG หรือ PDF
-            </strong>
-
-            <span>
-              สูงสุดตาม MAX_FILE_SIZE_MB บน Railway
-            </span>
-
+          <label id="dropZone" class="drop-zone" for="fileInput">
+            <div class="file-icon">📄</div>
+            <strong id="fileName">เลือกไฟล์ PNG, JPG หรือ PDF</strong>
+            <span>สูงสุดตาม MAX_FILE_SIZE_MB บน Railway</span>
           </label>
 
-          <div class="form-group">
-            <label>Uploaded by</label>
-
-            <input
-              id="uploadedBy"
-              type="text"
-              value="web"
-            />
+          <div class="field">
+            <label for="uploadedBy">Uploaded by</label>
+            <input id="uploadedBy" type="text" value="web" />
           </div>
 
-          <button class="btn primary" type="submit">
+          <button class="btn btn-primary" type="submit">
             อ่านข้อมูลด้วย OCR
           </button>
 
           <div id="uploadStatus" class="status"></div>
-
         </form>
+      </div>
 
-      </section>
+      <div id="previewSection" class="card">
+        <h3>2. OCR preview</h3>
+        <p class="muted">แก้ไขข้อมูลได้ก่อนกดยืนยันบันทึก</p>
 
-      <section
-        id="previewSection"
-        class="card"
-      >
-
-        <h2>2. OCR preview</h2>
-
-        <p>
-          แก้ไขข้อมูลได้ก่อนกดยืนยันบันทึก
-        </p>
-
-        <form id="previewForm"></form>
+        <form id="previewForm" class="preview-form"></form>
 
         <div id="saveStatus" class="status"></div>
-
-      </section>
-
-    </div>
-
+      </div>
+    </section>
   </main>
 
-</div>
-
-<script src="/app.js"></script>
-
+  <script src="/app.js"></script>
 </body>
 </html>
