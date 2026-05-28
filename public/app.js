@@ -100,7 +100,8 @@ function handleFile(file) {
   selectedFile = file;
 
   if (fileNameEl) {
-    fileNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    fileNameEl.textContent =
+      `${file.name} (${formatFileSize(file.size)})`;
   }
 
   showStatus(uploadStatus, "");
@@ -112,7 +113,6 @@ function createField(name, value = "") {
 
   const label = document.createElement("label");
   label.textContent = name;
-  label.setAttribute("for", `field_${name}`);
 
   let input;
 
@@ -124,7 +124,6 @@ function createField(name, value = "") {
     input.type = "text";
   }
 
-  input.id = `field_${name}`;
   input.name = name;
   input.value = value ?? "";
 
@@ -135,7 +134,6 @@ function createField(name, value = "") {
 }
 
 function renderPreviewForm(data) {
-  if (!previewForm) return;
 
   previewForm.innerHTML = "";
 
@@ -143,13 +141,16 @@ function renderPreviewForm(data) {
   grid.className = "preview-grid";
 
   previewFields.forEach((field) => {
-    grid.appendChild(createField(field, data?.[field] ?? ""));
+    grid.appendChild(
+      createField(field, data?.[field] ?? "")
+    );
   });
 
   const actions = document.createElement("div");
   actions.className = "form-actions";
 
   const saveButton = document.createElement("button");
+
   saveButton.type = "submit";
   saveButton.className = "btn primary";
   saveButton.textContent = "ยืนยันบันทึก";
@@ -160,160 +161,262 @@ function renderPreviewForm(data) {
   previewForm.appendChild(actions);
 
   previewForm.onsubmit = onConfirmSave;
-
-  if (previewSection) {
-    previewSection.classList.remove("hidden");
-  }
 }
 
 async function onUpload(event) {
+
   event.preventDefault();
 
   try {
+
     if (!selectedFile) {
-      showStatus(uploadStatus, "กรุณาเลือกไฟล์ก่อน", "error");
+      showStatus(
+        uploadStatus,
+        "กรุณาเลือกไฟล์ก่อน",
+        "error"
+      );
       return;
     }
 
-    showStatus(uploadStatus, "กำลังอ่านข้อความด้วย OCR...", "loading");
+    showStatus(
+      uploadStatus,
+      "กำลังอ่านข้อความด้วย OCR...",
+      "loading"
+    );
 
-    const documentType = guessDocumentType(selectedFile.name);
+    const documentType =
+      guessDocumentType(selectedFile.name);
 
     const formData = new FormData();
 
-    // สำคัญมาก: ต้องชื่อ file ให้ตรงกับ backend upload.single("file")
+    // สำคัญมาก
     formData.append("file", selectedFile);
 
-    formData.append("document_type", documentType);
-    formData.append("expense_category", "");
-    formData.append("uploaded_by", getUploadedBy());
+    formData.append(
+      "document_type",
+      documentType
+    );
 
-    const response = await fetch("/api/ocr-preview", {
-      method: "POST",
-      body: formData,
-    });
+    formData.append(
+      "expense_category",
+      ""
+    );
+
+    formData.append(
+      "uploaded_by",
+      getUploadedBy()
+    );
+
+    const response = await fetch(
+      "/api/ocr-preview",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
     const result = await response.json();
 
     if (!response.ok || !result.ok) {
+
       throw new Error(
-        typeof result.error === "string"
-          ? result.error
-          : result.message || "OCR failed"
+        result.message ||
+        result.error ||
+        "OCR failed"
       );
     }
 
     previewData = {
       ...result.data,
-      document_type: result.data?.document_type || documentType,
-      expense_category: result.data?.expense_category || "",
-      uploaded_by: result.data?.uploaded_by || getUploadedBy(),
-      status: result.data?.status || "preview",
+      document_type:
+        result.data?.document_type ||
+        documentType,
+
+      uploaded_by:
+        result.data?.uploaded_by ||
+        getUploadedBy(),
+
+      status:
+        result.data?.status ||
+        "preview",
     };
 
     renderPreviewForm(previewData);
 
     showStatus(
       uploadStatus,
-      "อ่านข้อความสำเร็จ กรุณาตรวจสอบข้อมูลด้านขวาก่อนบันทึก",
+      "อ่านข้อความสำเร็จ กรุณาตรวจสอบข้อมูลก่อนบันทึก",
       "success"
     );
+
   } catch (error) {
+
     console.error(error);
-    showStatus(uploadStatus, `ผิดพลาด: ${error.message}`, "error");
+
+    showStatus(
+      uploadStatus,
+      `ผิดพลาด: ${error.message}`,
+      "error"
+    );
   }
 }
 
 async function onConfirmSave(event) {
+
   event.preventDefault();
 
   try {
-    showStatus(saveStatus, "กำลังบันทึกลง Google Sheets...", "loading");
 
-    const formData = new FormData(previewForm);
+    showStatus(
+      saveStatus,
+      "กำลังบันทึกลง Google Sheets...",
+      "loading"
+    );
+
+    const formData =
+      new FormData(previewForm);
+
     const payload = {};
 
     for (const [key, value] of formData.entries()) {
       payload[key] = value;
     }
 
-    payload.uploaded_by = payload.uploaded_by || getUploadedBy();
+    payload.uploaded_by =
+      payload.uploaded_by ||
+      getUploadedBy();
+
     payload.status = "confirmed";
 
-    const response = await fetch("/api/confirm-save", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const response = await fetch(
+      "/api/confirm-save",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify(payload),
+      }
+    );
 
     const result = await response.json();
 
     if (!response.ok || !result.ok) {
+
       throw new Error(
-        typeof result.error === "string"
-          ? result.error
-          : result.message || "Save failed"
+        result.message ||
+        result.error ||
+        "Save failed"
       );
     }
 
-    showStatus(saveStatus, "บันทึกสำเร็จ", "success");
+    showStatus(
+      saveStatus,
+      "บันทึกสำเร็จ",
+      "success"
+    );
+
   } catch (error) {
+
     console.error(error);
-    showStatus(saveStatus, `ผิดพลาด: ${error.message}`, "error");
+
+    showStatus(
+      saveStatus,
+      `ผิดพลาด: ${error.message}`,
+      "error"
+    );
   }
 }
 
 function initFilePicker() {
+
   if (!fileInput) return;
 
-  fileInput.addEventListener("change", () => {
-    const file = fileInput.files?.[0];
-    handleFile(file);
-  });
+  fileInput.addEventListener(
+    "change",
+    () => {
 
-  if (dropZone) {
-    dropZone.addEventListener("click", () => {
-      fileInput.click();
-    });
+      const file =
+        fileInput.files?.[0];
 
-    dropZone.addEventListener("dragover", (event) => {
+      handleFile(file);
+    }
+  );
+
+  if (!dropZone) return;
+
+  dropZone.addEventListener(
+    "dragover",
+    (event) => {
+
       event.preventDefault();
-      dropZone.classList.add("dragover");
-    });
 
-    dropZone.addEventListener("dragleave", () => {
-      dropZone.classList.remove("dragover");
-    });
+      dropZone.classList.add(
+        "dragover"
+      );
+    }
+  );
 
-    dropZone.addEventListener("drop", (event) => {
+  dropZone.addEventListener(
+    "dragleave",
+    () => {
+
+      dropZone.classList.remove(
+        "dragover"
+      );
+    }
+  );
+
+  dropZone.addEventListener(
+    "drop",
+    (event) => {
+
       event.preventDefault();
-      dropZone.classList.remove("dragover");
 
-      const file = event.dataTransfer.files?.[0];
+      dropZone.classList.remove(
+        "dragover"
+      );
 
-      if (file) {
-        selectedFile = file;
+      const file =
+        event.dataTransfer.files?.[0];
 
-        try {
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          fileInput.files = dataTransfer.files;
-        } catch (e) {}
+      if (!file) return;
 
-        handleFile(file);
-      }
-    });
-  }
+      selectedFile = file;
+
+      try {
+
+        const dataTransfer =
+          new DataTransfer();
+
+        dataTransfer.items.add(file);
+
+        fileInput.files =
+          dataTransfer.files;
+
+      } catch (e) {}
+
+      handleFile(file);
+    }
+  );
 }
 
 function init() {
+
   initFilePicker();
 
   if (uploadForm) {
-    uploadForm.addEventListener("submit", onUpload);
+    uploadForm.addEventListener(
+      "submit",
+      onUpload
+    );
   }
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener(
+  "DOMContentLoaded",
+  init
+);
