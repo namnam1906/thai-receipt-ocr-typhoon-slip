@@ -1,1 +1,126 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thai Receipt OCR Typhoon</title><link rel="stylesheet" href="/style.css"></head><body><div class="app"><aside class="sidebar"><div class="brand"><span>⚡</span><div><b>Receipt OCR</b><small>Typhoon + n8n</small></div></div><nav><a class="active" href="/">Upload</a><a href="/dashboard.html">Dashboard</a></nav></aside><main class="main"><header class="hero"><div><p class="eyebrow">Thai receipt automation</p><h1>อัพโหลดใบเสร็จ / ใบกำกับภาษี / สลิปโอนเงิน แล้วตรวจข้อมูลก่อนบันทึก</h1><p>อ่านใบเสร็จ ใบกำกับภาษี และสลิปโอนเงินไทยด้วย Typhoon OCR และส่งข้อมูลเข้า Google Sheets ผ่าน n8n</p></div></header><section class="grid two"><div class="card upload-card"><h2>1. Upload document</h2><form id="uploadForm"><label class="dropzone" for="receipt"><input id="receipt" name="receipt" type="file" accept=".png,.jpg,.jpeg,.pdf" required><span class="icon">📄</span><b id="fileName">เลือกไฟล์ PNG, JPG หรือ PDF</b><small>สูงสุดตาม MAX_FILE_SIZE_MB บน Railway</small></label><label>Uploaded by<input name="uploaded_by" placeholder="เช่น admin, sales01" value="web"></label><button class="btn primary" type="submit">อ่านข้อมูลด้วย OCR</button></form><pre id="uploadStatus" class="status"></pre></div><div class="card"><h2>2. OCR preview</h2><p class="muted">แก้ไขข้อมูลได้ก่อนกดยืนยันบันทึก</p><form id="previewForm" class="form-grid"></form><div class="actions"><a id="fileLink" class="btn ghost hidden" target="_blank" rel="noreferrer">ดูไฟล์บน Google Drive</a><button id="saveBtn" class="btn primary" disabled>ยืนยันบันทึก</button></div><pre id="saveStatus" class="status"></pre></div></section></main></div><script src="/app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Thai Receipt OCR</title>
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+
+      <div>
+        <h2>Receipt OCR</h2>
+        <p>Typhoon + n8n</p>
+      </div>
+    </div>
+
+    <nav>
+      <a class="active" href="/">Upload</a>
+      <a href="/dashboard.html">Dashboard</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <section class="hero">
+      <p class="badge">THAI RECEIPT AUTOMATION</p>
+
+      <h1>
+        อัพโหลดใบเสร็จ / ใบกำกับภาษี /
+        สลิปโอนเงิน แล้วตรวจข้อมูลก่อนบันทึก
+      </h1>
+
+      <p>
+        อ่านใบเสร็จ ใบกำกับภาษี และสลิปโอนเงินไทยด้วย
+        Typhoon OCR และส่งข้อมูลเข้า Google Sheets ผ่าน n8n
+      </p>
+    </section>
+
+    <div class="content-grid">
+
+      <section class="card">
+
+        <h2>1. Upload document</h2>
+
+        <form id="uploadForm">
+
+          <input
+            id="fileInput"
+            name="file"
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf"
+            hidden
+          />
+
+          <label id="dropZone" class="upload-zone" for="fileInput">
+
+            <div class="upload-icon">
+              📄
+            </div>
+
+            <strong id="fileName">
+              เลือกไฟล์ PNG, JPG หรือ PDF
+            </strong>
+
+            <span>
+              สูงสุดตาม MAX_FILE_SIZE_MB บน Railway
+            </span>
+
+          </label>
+
+          <div class="form-group">
+            <label>Uploaded by</label>
+
+            <input
+              id="uploadedBy"
+              type="text"
+              value="web"
+            />
+          </div>
+
+          <button class="btn primary" type="submit">
+            อ่านข้อมูลด้วย OCR
+          </button>
+
+          <div id="uploadStatus" class="status"></div>
+
+        </form>
+
+      </section>
+
+      <section
+        id="previewSection"
+        class="card"
+      >
+
+        <h2>2. OCR preview</h2>
+
+        <p>
+          แก้ไขข้อมูลได้ก่อนกดยืนยันบันทึก
+        </p>
+
+        <form id="previewForm"></form>
+
+        <div id="saveStatus" class="status"></div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+</div>
+
+<script src="/app.js"></script>
+
+</body>
+</html>
