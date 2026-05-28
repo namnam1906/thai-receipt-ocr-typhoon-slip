@@ -1,0 +1,179 @@
+{
+  "name": "receipt-ocr-preview-typhoon",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "receipt-ocr-preview",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryData": true
+        }
+      },
+      "id": "4d8f2ee9-78ae-4d0a-aa14-626f99c4cf0c",
+      "name": "Webhook - receipt-ocr-preview",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -760,
+        0
+      ],
+      "webhookId": "receipt-ocr-preview"
+    },
+    {
+      "parameters": {
+        "name": "={{$binary.file.fileName}}",
+        "driveId": "={{$env.GOOGLE_DRIVE_ID || undefined}}",
+        "folderId": "={{$env.GOOGLE_DRIVE_FOLDER_ID || undefined}}",
+        "binaryData": true,
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "id": "38021e37-3698-4a8a-b15a-5f7ce5b7d83f",
+      "name": "Google Drive - Upload File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -520,
+        0
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const b=$input.first().binary?.file; const upload=$input.first().json; const mime=b?.mimeType || 'image/jpeg'; const base64=b?.data || ''; const fileUrl=upload.webViewLink || upload.webContentLink || upload.url || ''; return [{json:{file_url:fileUrl,mime,base64,prompt:`อ่านข้อความจากเอกสารการเงินไทยนี้ ซึ่งอาจเป็นใบเสร็จรับเงิน ใบกำกับภาษี หรือสลิปโอนเงิน แล้ว extract ข้อมูลออกมาเป็น JSON เท่านั้น ห้ามใส่ markdown ห้ามใส่คำอธิบาย\n\nต้องการ field:\ndocument_type\nissuer_name\nissuer_tax_id\nreceipt_no\nissue_date\nissue_time\ncustomer_name\ncustomer_tax_id\nsubtotal_amount\nvat_amount\ntotal_amount\npayment_method\nbank_name\nsender_name\nsender_account\nreceiver_name\nreceiver_account\ntransfer_datetime\ntransaction_ref\ntransfer_amount\n\nเงื่อนไข:\n- document_type ให้ตอบเป็น receipt, tax_invoice หรือ transfer_slip เท่านั้น\n- ถ้าเป็นสลิปโอนเงิน ให้ issuer_name เป็นชื่อธนาคารหรือผู้ให้บริการ ถ้าเห็นชัด\n- issue_date และ transfer_datetime ให้ตอบเป็น dd/mm/yyyy หรือ dd/mm/yyyy HH:mm และใช้ปี พ.ศ.\n- ถ้าวันที่เป็น ค.ศ. ให้แปลงเป็น พ.ศ.\n- ถ้าปีเป็น 2 หลัก เช่น 63 ให้ถือว่าเป็น พ.ศ. 2563\n- amount ให้ตอบเป็นตัวเลขเท่านั้น ไม่ต้องมี comma ไม่ต้องมีคำว่า บาท\n- สำหรับสลิปโอนเงิน ให้ total_amount และ transfer_amount เป็นยอดเงินเดียวกันถ้าพบ\n- payment_method สำหรับสลิปโอนเงินให้ตอบ \"โอนเงิน\"\n- ถ้าไม่พบข้อมูลให้ใส่ค่าว่าง \"\"\n- response ต้องเป็น valid JSON เท่านั้น`}}];"
+      },
+      "id": "11a53aa1-4ecf-4de5-bc09-85b016c95622",
+      "name": "Build Typhoon Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.opentyphoon.ai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.TYPHOON_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"typhoon-ocr\",\n  \"temperature\": 0,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        { \"type\": \"text\", \"text\": $json.prompt },\n        { \"type\": \"image_url\", \"image_url\": { \"url\": `data:${$json.mime};base64,${$json.base64}` } }\n      ]\n    }\n  ]\n}"
+      },
+      "id": "77f20278-e71d-4aac-89be-3393dd5a4cda",
+      "name": "Typhoon OCR API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeParse(s){try{return JSON.parse(s)}catch(e){const m=String(s||'').match(/\\{[\\s\\S]*\\}/);return m?JSON.parse(m[0]):{}}}\nconst item=$input.first().json;\nconst content=item.choices?.[0]?.message?.content || item.text || '';\nconst data=safeParse(content);\nreturn [{json:{data,ocr_text:content,file_url:$node['Build Typhoon Payload'].json.file_url,status:'preview'}}];"
+      },
+      "id": "3c4036bb-448f-4c1e-89b2-dfaa2804ef2c",
+      "name": "Parse OCR JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "f20e3b31-1355-4e91-8224-61591ef3dacf",
+      "name": "Respond Preview",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - receipt-ocr-preview": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Upload File": {
+      "main": [
+        [
+          {
+            "node": "Build Typhoon Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Typhoon Payload": {
+      "main": [
+        [
+          {
+            "node": "Typhoon OCR API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Typhoon OCR API": {
+      "main": [
+        [
+          {
+            "node": "Parse OCR JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse OCR JSON": {
+      "main": [
+        [
+          {
+            "node": "Respond Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

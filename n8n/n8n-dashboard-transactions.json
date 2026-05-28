@@ -1,0 +1,109 @@
+{
+  "name": "dashboard-transactions",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "transactions",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "30c4ebae-1e2a-440d-8b66-b48271da2591",
+      "name": "Webhook - transactions",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -520,
+        0
+      ],
+      "webhookId": "transactions"
+    },
+    {
+      "parameters": {
+        "documentId": "={{$env.GOOGLE_SHEET_ID}}",
+        "sheetName": "Transactions",
+        "options": {}
+      },
+      "id": "7ff78dcf-8e8c-43b7-b2cb-b5f1172d34bb",
+      "name": "Google Sheets - Read Rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -260,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows=$input.all().map(i=>i.json).reverse(); return [{json:{rows}}];"
+      },
+      "id": "0cb0fada-57c4-4c4d-855c-c217d0583913",
+      "name": "Format Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "f06dea76-5926-49a3-8210-8da10437e975",
+      "name": "Respond Transactions",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - transactions": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Read Rows": {
+      "main": [
+        [
+          {
+            "node": "Format Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Rows": {
+      "main": [
+        [
+          {
+            "node": "Respond Transactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "name": "receipt-confirm-save",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "receipt-confirm-save",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ba52ac3f-ac3c-48bf-a65f-36061b1e5bfa",
+      "name": "Webhook - receipt-confirm-save",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -520,
+        0
+      ],
+      "webhookId": "receipt-confirm-save"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body=$json.body || $json; const d=body.data || body; const now=new Date().toISOString(); const row={id:body.id || crypto.randomUUID(),created_at:now,uploaded_by:body.uploaded_by || 'web',document_type:d.document_type || body.document_type || 'receipt',expense_category:d.expense_category || body.expense_category || '',issuer_name:d.issuer_name||'',issuer_tax_id:d.issuer_tax_id||'',receipt_no:d.receipt_no||'',issue_date:d.issue_date||'',issue_time:d.issue_time||'',customer_name:d.customer_name||'',customer_tax_id:d.customer_tax_id||'',subtotal_amount:d.subtotal_amount||'',vat_amount:d.vat_amount||'',total_amount:d.total_amount||d.transfer_amount||'',payment_method:d.payment_method||'',bank_name:d.bank_name||'',sender_name:d.sender_name||'',sender_account:d.sender_account||'',receiver_name:d.receiver_name||'',receiver_account:d.receiver_account||'',transfer_datetime:d.transfer_datetime||'',transaction_ref:d.transaction_ref||'',transfer_amount:d.transfer_amount||d.total_amount||'',file_url:body.file_url||'',ocr_text:body.ocr_text||'',status:body.status || 'confirmed'}; return [{json:row}];"
+      },
+      "id": "6d889f69-ae93-41c9-8405-86222792fd2b",
+      "name": "Prepare Sheet Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "={{$env.GOOGLE_SHEET_ID}}",
+        "sheetName": "Transactions",
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
+      },
+      "id": "cce4a8ff-9bcf-493e-bc6b-447fef7323bf",
+      "name": "Google Sheets - Append Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -20,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_ME",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, message: 'บันทึกลง Google Sheets สำเร็จ', row: $json } }}",
+        "options": {}
+      },
+      "id": "120dc4ce-8d09-4c24-84af-13330235e0e9",
+      "name": "Respond Save",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - receipt-confirm-save": {
+      "main": [
+        [
+          {
+            "node": "Prepare Sheet Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Sheet Row": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Append Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Append Row": {
+      "main": [
+        [
+          {
+            "node": "Respond Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
